@@ -94,6 +94,29 @@ jobs:
       - name: Enable HTTP access for standard mobile bundle
         run: ./scripts/ci/configure-mobile-http.sh enable android
 
+      # app/build.gradle.kts evaluates the `release` signingConfig during
+      # configuration even for debug builds, casting keystore.properties
+      # values to non-null String. Without the file that cast throws
+      # ("null cannot be cast to non-null type kotlin.String") before any
+      # compilation happens, so a throwaway key is provisioned here.
+      - name: Provision a throwaway debug keystore
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd src-tauri/crates/tauritavern/gen/android
+          keystore="$RUNNER_TEMP/debug.keystore"
+          keytool -genkeypair \
+            -keystore "$keystore" \
+            -storepass android -keypass android \
+            -alias androiddebugkey \
+            -keyalg RSA -keysize 2048 -validity 10000 \
+            -dname "CN=Android Debug,O=Android,C=US"
+          {
+            echo "keyAlias=androiddebugkey"
+            echo "password=android"
+            echo "storeFile=$keystore"
+          } > keystore.properties
+
       - name: Build debug APK
         env:
           NDK_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
