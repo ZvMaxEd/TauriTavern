@@ -97,7 +97,7 @@ jobs:
       - name: Build debug APK
         env:
           NDK_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
-        run: pnpm run android:build -- --debug --apk --split-per-abi --target aarch64
+        run: node scripts/tauri-app.mjs --prepare-frontend android build --debug --apk --split-per-abi --target aarch64
 
       - name: Collect APKs
         if: always()
